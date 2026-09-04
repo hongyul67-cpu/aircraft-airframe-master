@@ -1,74 +1,171 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>항공기 기체정비</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>항공기 기체정비 마스터</title>
+<meta name="description" content="항공기체정비기능사 배우기 · 배관 길이 계산 · 눈금 읽기 · 종합시험">
 <!-- 수업용 「모두 같은 문제」 — 다른 공용 스크립트보다 먼저 -->
 <script src="https://hongyul67-cpu.github.io/links/fixorder.js"></script>
 <style>
-  :root{
-    --bg:#f5f6f8; --card:#fff; --line:#e2e5ea; --tx:#1c2430; --dim:#6b7684;
-    --pri:#2563eb; --ok:#12a150; --no:#e5484d; --warn:#f5a524;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--tx);
-       font:15px/1.65 "Pretendard","맑은 고딕",system-ui,sans-serif}
-  .wrap{max-width:860px;margin:0 auto;padding:16px 14px 90px}
+:root{
+  --bg:#f5f6f8; --card:#fff; --line:#e2e5ea; --tx:#1c2430; --dim:#6b7684;
+  --pri:#2563eb; --ok:#12a150; --no:#e5484d; --warn:#f5a524; --pu:#7c3aed;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);
+     font:15px/1.65 "Pretendard","맑은 고딕",system-ui,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:16px 14px 96px}
+button{font-family:inherit}
+[hidden]{display:none!important}
 
-  header{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
-  header h1{font-size:20px;margin:0;font-weight:800}
-  header .sub{color:var(--dim);font-size:13px}
+header{display:flex;align-items:baseline;gap:10px;margin:6px 0 14px;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;font-weight:800}
+header .sub{color:var(--dim);font-size:13px}
 
-  /* 탭 — class-mode.js 가 .tab 을 인식합니다 */
-  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-  .tab{padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);
-       cursor:pointer;font-weight:700;font-size:14px;color:var(--dim)}
-  .tab.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);
+     cursor:pointer;font-weight:700;font-size:14px;color:var(--dim)}
+.tab.on{background:var(--pri);border-color:var(--pri);color:#fff}
 
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
-        padding:16px 18px;margin-bottom:12px}
-  .card h3{margin:0 0 8px;font-size:16px}
-  .card .body{color:#333}
-  .kw{background:#eef4ff;color:#1d4ed8;border-radius:6px;padding:1px 6px;font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+      padding:16px 18px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:16px}
+.card .body{color:#333}
+.card .body p{margin:8px 0}
+.card .body ul,.card .body ol{margin:8px 0;padding-left:20px}
+.card .body li{margin:3px 0}
+.kw{background:#eef4ff;color:#1d4ed8;border-radius:6px;padding:1px 6px;font-weight:700}
+.tip{background:#f0f9f4;border-left:3px solid var(--ok);border-radius:0 8px 8px 0;padding:9px 12px}
+.warn{background:#fff7ed;border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:9px 12px}
 
-  .btn{border:1px solid var(--line);background:var(--card);border-radius:10px;
-       padding:10px 16px;font-weight:700;cursor:pointer;font-size:14px}
-  .btn-primary{background:var(--pri);border-color:var(--pri);color:#fff}
-  .btn:disabled{opacity:.5;cursor:default}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;
+     padding:10px 16px;font-weight:700;cursor:pointer;font-size:14px;color:var(--tx)}
+.btn-primary{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn-ghost{background:#f2f5fa}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-  /* 문제 — class-mode.js 가 .choice / .explain 을 인식합니다 */
-  .qnum{color:var(--dim);font-size:13px;font-weight:700}
-  .qtext{font-size:17px;font-weight:700;margin:6px 0 12px;line-height:1.5}
-  .choice{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);
-          border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;font-size:15px}
-  .choice:hover{border-color:var(--pri)}
-  .choice.correct{border-color:var(--ok);background:#eafaf1}
-  .choice.wrong{border-color:var(--no);background:#fdeeee}
-  .choice.picked{border-width:2px}
-  .explain{background:#f8fafc;border-left:3px solid var(--pri);border-radius:0 8px 8px 0;
-           padding:10px 14px;margin-top:10px;color:#334}
-  .progress{height:8px;background:#e8ebf0;border-radius:99px;overflow:hidden;margin:10px 0 16px}
-  .progress > i{display:block;height:100%;background:var(--pri);width:0;transition:width .25s}
+.pill{display:inline-block;background:#eef1f5;border-radius:99px;padding:2px 10px;
+      font-size:12px;font-weight:700;color:var(--dim)}
+.muted{color:var(--dim);font-size:13px}
+.score{font-size:34px;font-weight:900;letter-spacing:-1px}
+.empty{color:var(--dim);text-align:center;padding:34px 10px}
 
-  .empty{color:var(--dim);text-align:center;padding:34px 10px}
-  .score{font-size:34px;font-weight:900;letter-spacing:-1px}
-  .muted{color:var(--dim);font-size:13px}
-  .pill{display:inline-block;background:#eef1f5;border-radius:99px;padding:2px 10px;
-        font-size:12px;font-weight:700;color:var(--dim)}
+/* 표 — 개념·문항 공용. 좁은 화면에서는 옆으로 밀어 봅니다. */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0}
+table.tb{border-collapse:collapse;font-size:13.5px;min-width:0}
+table.tb th,table.tb td{border:1px solid var(--line);padding:5px 9px;text-align:center;vertical-align:middle}
+table.tb th{background:#f4f6fa;font-weight:700}
+table.tb td{background:#fff}
+table.tb td:not(:empty){white-space:normal}
+
+/* 문제 */
+.qnum{color:var(--dim);font-size:13px;font-weight:700}
+.qtext{font-size:17px;font-weight:700;margin:6px 0 12px;line-height:1.55}
+.choice{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);
+        border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;font-size:15px;color:var(--tx)}
+.choice:hover{border-color:var(--pri)}
+.choice.correct{border-color:var(--ok);background:#eafaf1}
+.choice.wrong{border-color:var(--no);background:#fdeeee}
+.choice.picked{border-width:2px}
+.explain{background:#f8fafc;border-left:3px solid var(--pri);border-radius:0 8px 8px 0;
+         padding:10px 14px;margin-top:10px;color:#334}
+.progress{height:8px;background:#e8ebf0;border-radius:99px;overflow:hidden;margin:10px 0 16px}
+.progress > i{display:block;height:100%;background:var(--pri);width:0;transition:width .25s}
+
+/* 배우기 단원 칩 */
+.units{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.unit{padding:8px 13px;border:1px solid var(--line);border-radius:10px;background:var(--card);
+      cursor:pointer;font-weight:700;font-size:13.5px;color:var(--dim)}
+.unit.on{background:var(--pu);border-color:var(--pu);color:#fff}
+.srcline{font-size:12px;color:var(--dim);margin-top:10px}
+
+/* 게임 */
+.gmenu{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.gcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;
+       cursor:pointer;text-align:left}
+.gcard:hover{border-color:var(--pri)}
+.gcard b{display:block;font-size:15.5px;margin-bottom:4px}
+.gcard span{font-size:13px;color:var(--dim)}
+
+/* 배관 계산 */
+.fig{overflow-x:auto;margin:8px 0 14px}
+.fig svg{display:block}
+table.calc{border-collapse:collapse;font-size:14px;width:100%;max-width:520px}
+table.calc th,table.calc td{border:1px solid var(--line);padding:4px 8px;text-align:center}
+table.calc th{background:#f4f6fa;font-weight:700;width:74px}
+table.calc td{padding:0}
+table.calc input{width:100%;min-width:88px;border:0;background:transparent;font:inherit;
+      font-size:15px;font-weight:700;text-align:center;padding:9px 6px;color:var(--tx)}
+table.calc input:focus{outline:2px solid var(--pri);outline-offset:-2px;border-radius:6px}
+table.calc tr.ok td{background:#eafaf1}
+table.calc tr.bad td{background:#fdeeee}
+.ansline{font-weight:800;color:var(--ok)}
+
+/* 눈금 읽기 */
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.opts button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:14px 10px;
+      font:inherit;font-size:17px;font-weight:800;cursor:pointer;color:var(--tx)}
+.opts button:hover{border-color:var(--pri)}
+.opts button.correct{border-color:var(--ok);background:#eafaf1}
+.opts button.wrong{border-color:var(--no);background:#fdeeee}
+.opts button:disabled{cursor:default}
+
+/* 이름 잇기 */
+.match{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mcol{display:grid;gap:7px;align-content:start}
+.mcol button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 12px;
+      font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:var(--tx);text-align:left}
+.mcol button:hover{border-color:var(--pri)}
+.mcol button.sel{outline:3px solid var(--pu);outline-offset:-3px}
+.mcol button.done{background:#eafaf1;border-color:var(--ok);color:var(--dim);cursor:default}
+.mcol button.miss{background:#fdeeee;border-color:var(--no)}
+.mcol .lb{font-size:12px;font-weight:800;color:var(--dim);margin-bottom:2px}
+
+/* 잠금 화면 */
+#lock{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;
+      align-items:center;justify-content:center;padding:20px}
+#lock .box{background:var(--card);border:1px solid var(--line);border-radius:16px;
+      padding:26px 22px;max-width:420px;width:100%;text-align:center}
+#lock h2{margin:0 0 6px;font-size:19px}
+#lock p{margin:6px 0 14px;font-size:13.5px;color:var(--dim)}
+#lock input{width:100%;font:inherit;font-size:17px;text-align:center;letter-spacing:2px;
+      padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+#lockMsg{min-height:22px;font-size:13.5px;font-weight:700;color:var(--dim)}
+
+@media (max-width:520px){
+  .wrap{padding:12px 11px 96px}
+  .qtext{font-size:16px}
+  .match{grid-template-columns:1fr}
+}
 </style>
 </head>
-<body>
-<div class="wrap">
+<body data-build="8ce19332">
 
+<div id="lock">
+  <div class="box">
+    <div style="font-size:38px;line-height:1">✈️</div>
+    <h2>항공기 기체정비 마스터</h2>
+    <p>공개문제를 정리한 자료가 들어 있어 <b>코드를 넣어야</b> 열립니다.<br>
+       <span id="lockN">…</span> · 선생님께 이번 주 코드를 받으세요.</p>
+    <input id="lockPw" type="text" inputmode="text" autocomplete="off" placeholder="코드 입력">
+    <div class="row" style="justify-content:center">
+      <button class="btn btn-primary" id="lockGo">열기</button>
+    </div>
+    <div id="lockMsg" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<div class="wrap" id="app" hidden>
   <header>
-    <h1>항공기 기체정비</h1>
+    <h1>✈️ 항공기 기체정비 마스터</h1>
     <span class="sub" id="hdSub"></span>
   </header>
 
   <div class="tabs">
     <button class="tab on" data-view="learn">📖 배우기</button>
+    <button class="tab"    data-view="game">🎮 게임</button>
     <button class="tab"    data-view="practice">✏️ 연습 8문항</button>
     <button class="tab"    data-view="exam">🏁 종합시험 20문항</button>
     <button class="tab"    data-view="wrong">📕 오답노트</button>
@@ -79,58 +176,43 @@
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   항공기 기체정비
+   항공기 기체정비 마스터
    규약: https://github.com/hongyul67-cpu/links/blob/master/CONVENTIONS.md
-   고칠 곳은 아래 LEARN / QUESTIONS 두 배열뿐입니다.
+
+   배우기(정답을 다 보여 주는 단계) → 게임 → 연습 → 종합시험 순서입니다.
+   배우기·문항 원본은 bank.enc(AES-GCM) 안에 있고, 잠금이 풀려야 채워집니다.
+   게임 문제는 이 파일에서 그때그때 만들어 냅니다.
    ══════════════════════════════════════════════════════════════ */
+'use strict';
 
-/* ── 1) 배우기 — 정답을 다 보여 주는 단계. 테스트보다 반드시 앞에 ── */
-const LEARN = [
-  { unit:'1단원', t:'첫 번째 개념', body:
-    '교과서 표현을 그대로 쓰고, 필요하면 짧은 보충만 덧붙입니다. ' +
-    '핵심어는 <span class="kw">이렇게</span> 강조합니다.' },
-  { unit:'1단원', t:'두 번째 개념', body:
-    '그림이 필요하면 <b>SVG 를 직접 그려</b> 넣습니다(외부 이미지 링크는 깨집니다).' },
-];
-
-/* ── 2) 문항 — a 는 정답 보기의 번호(0부터) ──
-      ⚠ 발문·보기·해설 어디에도 정답을 흘리지 말 것.
-        캡션("절단선을 보고 고르시오")이 답을 알려 주는 사고가 실제로 있었습니다. */
-const QUESTIONS = [
-  { unit:'1단원',
-    q:'여기에 발문을 씁니다. 한 값만 가리키도록 씁니다.',
-    ch:['보기 1','보기 2','보기 3','보기 4'],
-    a:1,
-    ex:'왜 그 답인지 — 학생이 혼자 읽고 이해할 만큼.' },
-  { unit:'1단원',
-    q:'두 번째 문항.',
-    ch:['보기 1','보기 2','보기 3','보기 4'],
-    a:0,
-    ex:'해설.' },
-];
-
-/* ── 3) 설정 ── */
-const CFG = {
-  practiceN : 8,     // 연습 문항 수
-  examN     : 20,    // 종합시험 문항 수 (규약)
-  storeKey  : 'aircraft-airframe-master_v1',
-};
-
-/* ══════════════ 여기부터는 대개 손대지 않습니다 ══════════════ */
+let LEARN = [], QUESTIONS = [];
+const CFG = { practiceN:8, examN:20, storeKey:'aircraft-airframe-master_v1' };
 
 const $  = s => document.querySelector(s);
-const el = (h) => { const d=document.createElement('div'); d.innerHTML=h.trim(); return d.firstElementChild; };
+/* <template> 로 만듭니다. <div>.innerHTML 로 만들면 <tr> 같은 표 조각이
+   파서에게 통째로 버려져 빈 표가 나옵니다(배관 계산 칸이 실제로 그렇게 사라졌습니다). */
+const el = h => { const t=document.createElement('template'); t.innerHTML=h.trim(); return t.content.firstElementChild; };
 const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(v=>v[1]);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const ri = n => Math.floor(Math.random()*n);
+
+/* 단원 이름 — 배우기 칩과 문항 배지에 함께 씁니다 */
+const UNAME = { '실기':'실기 공개문제', '배관':'배관 계산', '영상':'영상시험',
+                '1':'제1항 기본정비', '2':'제2항 착륙장치', '3':'제3항 조종장치',
+                '4':'제4항 헬리콥터', '5':'제5항 검사·취급' };
+const uname = u => UNAME[u] || u;
 
 const ST = load();
 function load(){
-  try{ return Object.assign({wrong:[],done:{}}, JSON.parse(localStorage.getItem(CFG.storeKey)||'{}')); }
-  catch(e){ return {wrong:[],done:{}}; }
+  try{ return Object.assign({wrong:[],read:{},best:{},scope:'all'}, JSON.parse(localStorage.getItem(CFG.storeKey)||'{}')); }
+  catch(e){ return {wrong:[],read:{},best:{},scope:'all'}; }
 }
 function save(){ try{ localStorage.setItem(CFG.storeKey, JSON.stringify(ST)); }catch(e){} }
 
-let quiz = null;          // 지금 풀고 있는 세트
-let lastResult = null;    // 제출용 결과
+let quiz = null;        // 지금 풀고 있는 세트
+let lastResult = null;  // 제출용 결과
+let curView = 'learn';
+let tick = null;        // 타이머 — 화면을 옮길 때 반드시 끕니다
 
 /* ── 화면 전환 ── */
 document.querySelectorAll('.tab').forEach(t=>{
@@ -142,79 +224,156 @@ document.querySelectorAll('.tab').forEach(t=>{
 });
 
 function render(view){
-  const v = $('#view');
-  v.innerHTML = '';
+  if(tick){ clearInterval(tick); tick=null; }
+  curView = view;
+  const v = $('#view'); v.innerHTML='';
   if(view==='learn')    return renderLearn(v);
+  if(view==='game')     return renderGameMenu(v);
   if(view==='practice') return startQuiz(v,'practice');
   if(view==='exam')     return startQuiz(v,'exam');
   if(view==='wrong')    return renderWrong(v);
 }
+function goTab(name){ document.querySelector('[data-view="'+name+'"]').click(); }
 
-/* ── 배우기 ── */
-function renderLearn(v){
-  LEARN.forEach(c=>{
-    v.appendChild(el(`<div class="card">
-      <span class="pill">${c.unit||''}</span>
-      <h3>${c.t}</h3>
-      <div class="body">${c.body}</div>
-    </div>`));
+/* 표는 좁은 화면에서 옆으로 밀어 볼 수 있게 감쌉니다 */
+function wrapTables(root){
+  root.querySelectorAll('table.tb').forEach(t=>{
+    if(t.parentNode && t.parentNode.classList && t.parentNode.classList.contains('tw')) return;
+    const w = document.createElement('div'); w.className='tw';
+    t.parentNode.insertBefore(w,t); w.appendChild(t);
   });
-  v.appendChild(el(`<div class="card row">
-    <b>다 읽었으면</b>
-    <button class="btn btn-primary" id="goPractice">✏️ 연습 ${CFG.practiceN}문항 풀어보기</button>
-  </div>`));
-  $('#goPractice').onclick = ()=>document.querySelector('[data-view="practice"]').click();
 }
 
-/* ── 문제 풀이 ──
-   연습  : 고르는 즉시 정답·해설 공개, 점수 실시간, 연출 있음
-   종합  : 아무것도 알려주지 않음, 점수 감춤, 연출 없음 (규약 2)  */
+/* ══════════════════ 배우기 ══════════════════
+   정답을 다 보여 주는 단계입니다. 테스트보다 반드시 앞에 둡니다. */
+let learnUnit = null;
+function renderLearn(v){
+  const units = [...new Set(LEARN.map(s=>s.u))];
+  if(!units.length){ v.appendChild(el('<div class="empty">개념 자료가 아직 없습니다.</div>')); return; }
+  if(!learnUnit || !units.includes(learnUnit)) learnUnit = units[0];
+
+  const chips = el('<div class="units"></div>');
+  units.forEach(u=>{
+    const n = LEARN.filter(s=>s.u===u).length;
+    const doneN = LEARN.filter(s=>s.u===u && ST.read[s.t]).length;
+    const b = el('<button class="unit'+(u===learnUnit?' on':'')+'">'+uname(u)
+      + ' <span style="opacity:.75">'+doneN+'/'+n+'</span></button>');
+    b.onclick = ()=>{ learnUnit=u; renderLearn(v); };
+    chips.appendChild(b);
+  });
+  v.innerHTML=''; v.appendChild(chips);
+
+  const secs = LEARN.filter(s=>s.u===learnUnit);
+  v.appendChild(el('<div class="card"><h3>'+secs[0].unit+'</h3>'
+    + '<div class="muted">자료 '+secs.length+'장 · 답이 다 보입니다. 먼저 읽고 게임·연습으로 넘어가세요.</div></div>'));
+
+  secs.forEach(s=>{
+    const c = el('<div class="card">'
+      + '<span class="pill">'+uname(s.u)+'</span>'
+      + '<h3>'+s.t+'</h3>'
+      + '<div class="body">'+s.body+'</div>'
+      + '<div class="srcline">📗 '+s.src+'</div>'
+      + '<div class="row" style="margin-top:10px"></div></div>');
+    wrapTables(c);
+    const rd = el('<button class="btn'+(ST.read[s.t]?'':' btn-ghost')+'">'
+      + (ST.read[s.t]?'✅ 읽었어요':'읽음으로 표시') + '</button>');
+    rd.onclick = ()=>{ ST.read[s.t] = !ST.read[s.t]; save(); renderLearn(v); };
+    c.querySelector('.row').appendChild(rd);
+    v.appendChild(c);
+  });
+
+  const next = el('<div class="card row"><b>다 읽었으면</b>'
+    + '<button class="btn" id="goGame">🎮 게임으로 익히기</button>'
+    + '<button class="btn btn-primary" id="goPractice">✏️ 연습 '+CFG.practiceN+'문항</button></div>');
+  v.appendChild(next);
+  $('#goGame').onclick = ()=>goTab('game');
+  $('#goPractice').onclick = ()=>goTab('practice');
+}
+
+/* ══════════════════ 문제 풀이 ══════════════════
+   연습 : 고르는 즉시 정답·해설 공개, 점수 실시간, 연출 있음
+   종합 : 아무것도 알려주지 않음, 점수 감춤, 연출 없음 (규약 2) */
+const QUNITS = ['1','2','3','4','5'];
+function inScope(id){ return id==='all' ? QUESTIONS.slice() : QUESTIONS.filter(q=>q.u===id); }
+function scopeName(id){ return id==='all' ? '전체' : uname(id); }
+
 function startQuiz(v, mode){
   const n = mode==='exam' ? CFG.examN : CFG.practiceN;
-  quiz = { mode, i:0, correct:0, picks:[],
-           list: shuffle(QUESTIONS.slice()).slice(0, Math.min(n, QUESTIONS.length)),
-           startTime: Date.now() };
-  if(!quiz.list.length){ v.appendChild(el('<div class="empty">문항이 아직 없습니다.</div>')); return; }
-  drawQ(v);
+  if(!QUESTIONS.length){ v.appendChild(el('<div class="empty">문항이 아직 없습니다.</div>')); return; }
+
+  const c = el('<div class="card">'
+    + '<h3>'+(mode==='exam'?'🏁 종합시험 '+n+'문항':'✏️ 연습 '+n+'문항')+'</h3>'
+    + '<div class="muted">어느 항에서 낼지 고르세요. 다음에도 이 범위가 기억됩니다.</div>'
+    + '<div class="units" id="scChips" style="margin-top:12px"></div>'
+    + '<div class="row" style="margin-top:6px">'
+    + '<button class="btn btn-primary" id="scGo">시작하기 →</button>'
+    + '<span class="muted" id="scMsg"></span></div></div>');
+  v.appendChild(c);
+
+  const chips = c.querySelector('#scChips');
+  const go = c.querySelector('#scGo'), msg = c.querySelector('#scMsg');
+  function paint(){
+    chips.innerHTML = '';
+    [{id:'all'}].concat(QUNITS.map(u=>({id:u}))).forEach(o=>{
+      const cnt = inScope(o.id).length;
+      const b = el('<button class="unit'+(ST.scope===o.id?' on':'')+'">'+scopeName(o.id)
+        + ' <span style="opacity:.75">'+cnt+'</span></button>');
+      b.onclick = ()=>{ ST.scope=o.id; save(); paint(); };
+      chips.appendChild(b);
+    });
+    const cnt = inScope(ST.scope).length;
+    go.disabled = cnt===0;
+    msg.textContent = cnt===0 ? '이 범위에는 문항이 없습니다.'
+      : (cnt < n ? scopeName(ST.scope)+' 은(는) '+cnt+'문항뿐이라 '+cnt+'문항으로 봅니다.'
+                 : scopeName(ST.scope)+' '+cnt+'문항 중 '+n+'문항을 뽑습니다.');
+  }
+  paint();
+
+  go.onclick = ()=>{
+    const pool = inScope(ST.scope);
+    if(!pool.length) return;
+    quiz = { mode, i:0, correct:0, picks:[], scope:ST.scope,
+             list: shuffle(pool.slice()).slice(0, Math.min(n, pool.length)),
+             startTime: Date.now() };
+    drawQ(v);
+  };
 }
 
 function drawQ(v){
   const q = quiz.list[quiz.i];
   const isExam = quiz.mode==='exam';
   v.innerHTML='';
-  v.appendChild(el(`<div class="progress"><i style="width:${quiz.i/quiz.list.length*100}%"></i></div>`));
-  const card = el(`<div class="card">
-      <div class="qnum">${quiz.i+1} / ${quiz.list.length}
-        ${isExam ? '<span class="pill" style="margin-left:6px">채점은 마지막에</span>'
-                 : `<span class="pill" style="margin-left:6px">${quiz.correct}개 맞힘</span>`}</div>
-      <div class="qtext">${q.q}</div>
-      <div id="chs"></div>
-      <div id="exp"></div>
-    </div>`);
+  v.appendChild(el('<div class="progress"><i style="width:'+(quiz.i/quiz.list.length*100)+'%"></i></div>'));
+  const card = el('<div class="card">'
+    + '<div class="qnum">'+(quiz.i+1)+' / '+quiz.list.length
+    + ' <span class="pill" style="margin-left:6px">'+uname(q.u)+'</span>'
+    + (isExam ? ' <span class="pill">채점은 마지막에</span>'
+              : ' <span class="pill">'+quiz.correct+'개 맞힘</span>')
+    + '</div>'
+    + '<div class="qtext">'+q.q+'</div>'
+    + '<div id="chs"></div><div id="exp"></div></div>');
   v.appendChild(card);
 
   const chs = card.querySelector('#chs');
   q.ch.forEach((c,idx)=>{
-    const b = el(`<button class="choice">${idx+1}. ${c}</button>`);
-    b.onclick = ()=>pick(v, idx, b);
+    const b = el('<button class="choice">'+(idx+1)+'. '+c+'</button>');
+    b.onclick = ()=>pickAns(v, idx, b);
     chs.appendChild(b);
   });
 }
 
-function pick(v, idx, btn){
+function pickAns(v, idx, btn){
   const q = quiz.list[quiz.i];
   const ok = idx === q.a;
   quiz.picks.push({q, pick:idx, ok});
-  if(ok) quiz.correct++;
-  else   pushWrong(q, idx);
+  if(ok) quiz.correct++; else pushWrong(q, idx);
 
-  if(quiz.mode==='exam'){                 // 종합시험 — 아무 표시 없이 다음으로
+  if(quiz.mode==='exam'){                 /* 종합시험 — 아무 표시 없이 다음으로 */
     quiz.i++;
     if(quiz.i >= quiz.list.length) return finish(v);
     return drawQ(v);
   }
 
-  /* 연습 — 정답·해설 즉시 공개 + 연출 */
   document.querySelectorAll('.choice').forEach((b,i)=>{
     b.disabled = true;
     if(i===q.a) b.classList.add('correct');
@@ -223,9 +382,10 @@ function pick(v, idx, btn){
   try{ if(window.FX) ok ? FX.ok(btn) : FX.no(btn); }catch(e){ console.warn('FX', e); }
 
   const exp = document.querySelector('#exp');
-  exp.appendChild(el(`<div class="explain"><b>${ok?'맞았습니다':'정답은 '+(q.a+1)+'번'}</b><br>${q.ex||''}</div>`));
-  const next = el(`<div class="row" style="margin-top:12px">
-      <button class="btn btn-primary">${quiz.i+1>=quiz.list.length?'결과 보기':'다음 문제 →'}</button></div>`);
+  exp.appendChild(el('<div class="explain"><b>'+(ok?'맞았습니다':'정답은 '+(q.a+1)+'번')+'</b><br>'
+    + (q.ex||'') + '<div class="srcline">📗 '+(q.src||'')+'</div></div>'));
+  const next = el('<div class="row" style="margin-top:12px">'
+    + '<button class="btn btn-primary">'+(quiz.i+1>=quiz.list.length?'결과 보기':'다음 문제 →')+'</button></div>');
   exp.appendChild(next);
   next.querySelector('button').onclick = ()=>{
     quiz.i++;
@@ -234,107 +394,616 @@ function pick(v, idx, btn){
   };
 }
 
-function pushWrong(q, pick){
+function pushWrong(q, p){
   ST.wrong = ST.wrong.filter(w => w.q !== q.q);
-  ST.wrong.unshift({ unit:q.unit||'', q:q.q, ch:q.ch, a:q.a, pick, ex:q.ex||'', at:Date.now() });
+  ST.wrong.unshift({ u:q.u||'', topic:q.topic||'', q:q.q, ch:q.ch, a:q.a, pick:p,
+                     ex:q.ex||'', src:q.src||'', at:Date.now() });
   ST.wrong = ST.wrong.slice(0, 100);
   save();
 }
 
-/* ── 끝난 뒤 ── */
 function finish(v){
   const n   = quiz.list.length;
   const pct = Math.round(quiz.correct / n * 100);
   const sec = Math.round((Date.now() - quiz.startTime)/1000);
-  const part = quiz.mode==='exam' ? '종합시험' : '연습';
+  const part = (quiz.mode==='exam' ? '종합시험' : '연습') + ' ' + scopeName(quiz.scope);
 
   v.innerHTML = '';
-  v.appendChild(el(`<div class="card" style="text-align:center">
-      <div class="score">${pct}점</div>
-      <div class="muted">${n}문항 중 ${quiz.correct}개 정답 · ${Math.floor(sec/60)}분 ${sec%60}초</div>
-      <div id="rankBox" style="margin-top:12px"></div>
-      <div id="rSubmitAnchor" style="margin-top:12px"></div>
-    </div>`));
+  v.appendChild(el('<div class="card" style="text-align:center">'
+    + '<div class="score">'+pct+'점</div>'
+    + '<div class="muted">'+n+'문항 중 '+quiz.correct+'개 정답 · '
+    + Math.floor(sec/60)+'분 '+(sec%60)+'초</div>'
+    + '<div id="rankBox" style="margin-top:12px"></div>'
+    + '<div id="rSubmitAnchor" style="margin-top:12px"></div></div>'));
 
   /* 오답노트 — 종합시험은 여기서 처음으로 정답을 본다 */
   const bad = quiz.picks.filter(p=>!p.ok);
   if(bad.length){
-    v.appendChild(el('<div class="card"><h3>📕 틀린 문제</h3></div>'));
-    bad.forEach(p=>{
-      v.appendChild(el(`<div class="card">
-        <span class="pill">${p.q.unit||''}</span>
-        <div class="qtext">${p.q.q}</div>
-        <div class="muted">내가 고른 답 : ${p.pick+1}. ${p.q.ch[p.pick]}</div>
-        <div style="color:var(--ok);font-weight:700">정답 : ${p.q.a+1}. ${p.q.ch[p.q.a]}</div>
-        <div class="explain">${p.q.ex||''}</div>
-      </div>`));
-    });
+    v.appendChild(el('<div class="card"><h3>📕 틀린 문제 '+bad.length+'개</h3>'
+      + '<div class="muted">무엇을 틀렸는지 확인하고 넘어가세요.</div></div>'));
+    bad.forEach(p=>v.appendChild(wrongCard(p.q, p.pick)));
+  } else {
+    v.appendChild(el('<div class="card" style="text-align:center">🎉 <b>다 맞혔습니다!</b></div>'));
   }
 
-  /* 제출을 먼저 붙입니다 — 연출·계급에서 오류가 나도 제출 버튼은 살아 있어야 합니다.
-     (실제로 소리 재생이 막힌 환경에서 FX 가 던진 오류에 제출 버튼이 통째로 사라진 적이 있습니다) */
-  mountSubmit(pct, quiz.correct, n, sec, part, bad);
+  /* 제출을 먼저 붙입니다 — 연출·계급에서 오류가 나도 제출 버튼은 살아 있어야 합니다. */
+  mountSubmit(pct, quiz.correct, n, sec, part,
+    bad.map(p => uname(p.q.u)+' '+(p.q.topic||p.q.q.slice(0,18))+' → 정답 '+(p.q.a+1)+'번'),
+    ['항공기 기체정비 '+part+' '+pct+'점']);
 
   try{
     if(window.FX && pct>=60){
-      FX.banner({ title: pct>=90?'훌륭합니다!':'통과!', sub:`${part} ${pct}점`,
+      FX.banner({ title: pct>=90?'훌륭합니다!':'통과!', sub:part+' '+pct+'점',
                   stars: FX.starsFor ? FX.starsFor(pct) : 0 });
     }
   }catch(e){ console.warn('FX', e); }
   try{
     if(window.Rank){
-      const res = Rank.award(pct, { mode:`항공기 기체정비 — ${part}` });   // RP 정산
-      $('#rankBox').innerHTML = Rank.resultBox(res);                     // 문자열 HTML 을 돌려줍니다
+      const res = Rank.award(pct, { mode:'항공기 기체정비 마스터 — '+part });
+      $('#rankBox').innerHTML = Rank.resultBox(res);
     }
   }catch(e){ console.warn('Rank', e); }
 }
 
-/* ── 결과 제출 (규약 1) ──
-   mode 는 파트마다 다르게, wrong 은 번호가 아니라 "무엇을 틀렸는지" */
-function mountSubmit(pct, correct, total, sec, part, bad){
-  lastResult = {
-    mode   : `항공기 기체정비 — ${part}`,
-    score  : pct, correct, total,
-    wrong  : bad.map(p => `${p.q.unit||''} ${p.q.q.slice(0,24)}… → 정답 ${p.q.a+1}번`),
-    durationSec : sec,
-  };
+function wrongCard(q, p){
+  const c = el('<div class="card">'
+    + '<span class="pill">'+uname(q.u)+' '+(q.topic||'')+'</span>'
+    + '<div class="qtext">'+q.q+'</div>'
+    + '<div class="muted">내가 고른 답 : '+(p+1)+'. '+q.ch[p]+'</div>'
+    + '<div style="color:var(--ok);font-weight:700">정답 : '+(q.a+1)+'. '+q.ch[q.a]+'</div>'
+    + '<div class="explain">'+(q.ex||'')+'<div class="srcline">📗 '+(q.src||'')+'</div></div></div>');
+  wrapTables(c);
+  return c;
+}
+
+/* ── 결과 제출 (규약 1) — mode 는 파트마다 다르게, wrong 은 무엇을 틀렸는지 ── */
+function mountSubmit(pct, correct, total, sec, part, wrongList, extra){
+  lastResult = { mode:'항공기 기체정비 마스터 — '+part, score:pct, correct, total,
+                 wrong:wrongList||[], durationSec:sec };
   const anchor = $('#rSubmitAnchor');
   if(!(window.ResultCollector && ResultCollector.attach) || !anchor) return;
   const btn = ResultCollector.attach(anchor, ()=>lastResult, {
-    id:'rcBtn', className:'btn btn-primary',
-    mode: lastResult.mode,
-    extra: [`항공기 기체정비 ${part} ${pct}점`],
-  });
-  if(btn){ btn.style.width='100%'; btn.textContent = `📤 [${part}] 결과 제출`; }
+    id:'rcBtn', className:'btn btn-primary', mode:lastResult.mode, extra:extra||[] });
+  if(btn){ btn.style.width='100%'; btn.textContent = '📤 ['+part+'] 결과 제출'; }
 }
 
-/* ── 오답노트 (쌓인 것) ── */
+/* ── 쌓인 오답노트 ── */
 function renderWrong(v){
   if(!ST.wrong.length){
     v.appendChild(el('<div class="empty">🗒️ 아직 오답이 없어요!<br>연습이나 종합시험을 풀면 여기에 모입니다.</div>'));
     return;
   }
-  v.appendChild(el(`<div class="card row">
-      <b>${ST.wrong.length}문항</b>
-      <button class="btn" id="clrWrong">비우기</button></div>`));
+  const head = el('<div class="card row"><b>'+ST.wrong.length+'문항</b>'
+    + '<button class="btn" id="clrWrong">비우기</button></div>');
+  v.appendChild(head);
   $('#clrWrong').onclick = ()=>{ ST.wrong=[]; save(); render('wrong'); };
-  ST.wrong.forEach(w=>{
-    v.appendChild(el(`<div class="card">
-      <span class="pill">${w.unit}</span>
-      <div class="qtext">${w.q}</div>
-      <div class="muted">내가 고른 답 : ${w.pick+1}. ${w.ch[w.pick]}</div>
-      <div style="color:var(--ok);font-weight:700">정답 : ${w.a+1}. ${w.ch[w.a]}</div>
-      <div class="explain">${w.ex}</div>
-    </div>`));
+  ST.wrong.forEach(w=>v.appendChild(wrongCard(w, w.pick)));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   게임 — 문제를 그때그때 만들어 냅니다
+   ══════════════════════════════════════════════════════════════ */
+const GAMES = [
+  { id:'pipe', emoji:'📐', name:'파이프 배관 길이 계산',
+    desc:'도면 치수를 보고 A~G 와 S1~S3 를 계산합니다. 채점은 한 번.', run:gamePipe },
+  { id:'mic',  emoji:'📏', name:'마이크로미터 눈금 읽기',
+    desc:'슬리브와 딤블을 읽어 측정값을 맞힙니다. mm 와 inch 둘 다 나옵니다.', run:gameMic },
+  { id:'name', emoji:'🧰', name:'명칭 잇기',
+    desc:'장비·장치의 이름과 하는 일을 짝지어 붙입니다.', run:gameMatch },
+];
+
+function renderGameMenu(v){
+  v.appendChild(el('<div class="card"><h3>🎮 게임</h3>'
+    + '<div class="muted">배우기에서 본 내용을 손으로 해 보는 곳입니다. 결과는 게임마다 따로 제출됩니다.</div></div>'));
+  const g = el('<div class="gmenu"></div>');
+  GAMES.forEach(gm=>{
+    const b = el('<button class="gcard"><b>'+gm.emoji+' '+gm.name+'</b><span>'+gm.desc+'</span>'
+      + (ST.best[gm.id]!=null ? '<span style="display:block;margin-top:6px;color:var(--pri);font-weight:800">최고 '+ST.best[gm.id]+'점</span>' : '')
+      + '</button>');
+    b.onclick = ()=>{ const w=$('#view'); w.innerHTML=''; gm.run(w); };
+    g.appendChild(b);
+  });
+  v.appendChild(g);
+}
+function gameHead(v, gm, extraHtml){
+  const c = el('<div class="card"><div class="row" style="justify-content:space-between">'
+    + '<b>'+gm.emoji+' '+gm.name+'</b>'
+    + '<button class="btn btn-ghost" id="gBack">← 게임 목록</button></div>'
+    + (extraHtml||'') + '</div>');
+  v.appendChild(c);
+  $('#gBack').onclick = ()=>{ if(tick){clearInterval(tick);tick=null;} render('game'); };
+  return c;
+}
+function gameFinish(v, gm, pct, right, total, sec, wrongList, extra){
+  if(ST.best[gm.id]==null || pct>ST.best[gm.id]){ ST.best[gm.id]=pct; save(); }
+  v.innerHTML='';
+  gameHead(v, gm);
+  v.appendChild(el('<div class="card" style="text-align:center">'
+    + '<div class="score">'+pct+'점</div>'
+    + '<div class="muted">'+total+'문제 중 '+right+'개 정답 · '+sec+'초</div>'
+    + '<div id="rankBox" style="margin-top:12px"></div>'
+    + '<div id="rSubmitAnchor" style="margin-top:12px"></div></div>'));
+  if(wrongList && wrongList.length){
+    v.appendChild(el('<div class="card"><h3>📕 놓친 것</h3><div class="muted">'
+      + wrongList.map(w=>'· '+w).join('<br>') + '</div></div>'));
+  }
+  const again = el('<div class="card row"><button class="btn btn-primary">다시 하기</button>'
+    + '<button class="btn">다른 게임</button></div>');
+  v.appendChild(again);
+  again.querySelectorAll('button')[0].onclick = ()=>{ const w=$('#view'); w.innerHTML=''; gm.run(w); };
+  again.querySelectorAll('button')[1].onclick = ()=>render('game');
+
+  mountSubmit(pct, right, total, sec, gm.name, wrongList||[], extra||['항공기 기체정비 '+gm.name+' '+pct+'점']);
+  try{ if(window.FX && pct>=60) FX.banner({ title:pct>=90?'완벽!':'통과!', sub:gm.name+' '+pct+'점',
+        stars: FX.starsFor?FX.starsFor(pct):0 }); }catch(e){ console.warn('FX',e); }
+  try{ if(window.Rank){ const r=Rank.award(pct,{mode:'항공기 기체정비 마스터 — '+gm.name});
+        $('#rankBox').innerHTML = Rank.resultBox(r); } }catch(e){ console.warn('Rank',e); }
+}
+
+/* ────────────────────────────────────────────────
+   게임 1 — 파이프 배관 길이 계산
+
+   식은 수업 자료(파이프 길이 계산.xlsx)에 있는 그대로입니다.
+   원주율은 3.14 를 씁니다. math.PI 를 쓰면 자료의 정답표와 끝자리가 어긋납니다.
+   ──────────────────────────────────────────────── */
+const PI314 = 3.14;
+/* 자료에 실려 있는 문제 — [이름, R, ①, ②, ③, ④] */
+const PIPE_SRC = [
+  ['실습지시서 1번', 38, 140, 100,  80, 100],
+  ['실습지시서 2번', 38, 120,  80,  80,  80],
+  ['실습지시서 3번', 36, 140,  90,  90,  90],
+  ['실습지시서 4번', 38, 140, 100,  90,  80],
+  ['실습지시서 5번', 38, 130,  70,  80,  60],
+  ['실습지시서 6번', 34, 130,  70,  80,  60],
+  ['실습지시서 7번', 32, 140,  70,  80,  80],
+  ['수행평가 1번',   38, 140,  80,  90,  90],
+  ['수행평가 2번',   38, 140,  90,  90, 100],
+];
+function pipeCalc(R, d1, d2, d3, d4){
+  const K = R * Math.tan(22.5*PI314/180);
+  const A = d1 - R;
+  const B = 90/360 * 2 * PI314 * R;
+  const C = d2 - R - K;
+  const D = 45/360 * 2 * PI314 * R;
+  const E = d4 / Math.sin(45*PI314/180) - 2*K;
+  const F = D;
+  const G = d3 - K;
+  return { K, A, B, C, D, E, F, G,
+           S1:A, S2:A+B+C, S3:A+B+C+D+E, T:A+B+C+D+E+F+G };
+}
+function pipeFig(R, d1, d2, d3, d4){
+  /* 굽힌 모양을 대충 그린 그림입니다. 치수를 어디서 재는지 보여 주는 것이 목적입니다. */
+  return '<div class="fig"><svg width="470" height="230" viewBox="0 0 470 230" role="img"'
+    + ' aria-label="배관 도면 — ①'+d1+' ②'+d2+' ③'+d3+' ④'+d4+' R'+R+'">'
+    + '<g fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M40 200 V80 Q40 60 60 60 H150 L235 145 H330 Q350 145 350 125 V40"/></g>'
+    + '<g fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3">'
+    + '<path d="M40 200 H360 M40 60 H360 M40 200 V215 M150 60 V45"/></g>'
+    + '<g font-size="13" font-weight="700" fill="#1c2430">'
+    + '<text x="14" y="135">①</text><text x="6" y="152">'+d1+'</text>'
+    + '<text x="88" y="50">②</text><text x="80" y="35">'+d2+'</text>'
+    + '<text x="378" y="95">③</text><text x="378" y="112">'+d3+'</text>'
+    + '<text x="240" y="185">④</text><text x="232" y="202">'+d4+'</text>'
+    + '<text x="60" y="80" fill="#7c3aed">R'+R+'</text>'
+    + '<text x="205" y="120" fill="#7c3aed">135°</text>'
+    + '<text x="338" y="163" fill="#7c3aed">135°</text></g>'
+    + '<g font-size="12" font-weight="800" fill="#e5484d">'
+    + '<text x="46" y="150">A</text><text x="44" y="52">B</text><text x="105" y="52">C</text>'
+    + '<text x="163" y="82">D</text><text x="192" y="118">E</text><text x="250" y="152">F</text>'
+    + '<text x="356" y="90">G</text></g>'
+    + '</svg></div>';
+}
+const PIPE_ROWS = ['A','B','C','D','E','F','G','S1','S2','S3','T'];
+const PIPE_LABEL = { T:'전체길이' };
+
+function gamePipe(v){
+  const gm = GAMES[0];
+  const p = pick(PIPE_SRC);
+  const [name, R, d1, d2, d3, d4] = p;
+  const ans = pipeCalc(R, d1, d2, d3, d4);
+  const start = Date.now();
+
+  gameHead(v, gm, '<div class="muted" style="margin-top:8px">'
+    + '<b>'+name+'</b> · 굽힘 반지름 R'+R+' · 단위 mm<br>'
+    + '소수 첫째 자리까지 쓰세요. <b>±0.5 까지 맞는 것으로 봅니다.</b> 채점은 한 번뿐입니다.</div>');
+
+  const c = el('<div class="card">'
+    + pipeFig(R, d1, d2, d3, d4)
+    + '<div class="muted" style="margin-bottom:8px">K = R × tan22.5° · B = 90/360 × 2 × 3.14 × R · '
+    + 'D = 45/360 × 2 × 3.14 × R · E = ④ ÷ sin45° − 2K</div>'
+    + '<div class="tw"><table class="calc" id="pipeT"><tr><th>구간</th><th>길이 (mm)</th></tr></table></div>'
+    + '<div class="row" style="margin-top:12px"><button class="btn btn-primary" id="pGo">채점하기</button>'
+    + '<span class="muted" id="pMsg"></span></div></div>');
+  v.appendChild(c);
+
+  const t = c.querySelector('#pipeT');
+  PIPE_ROWS.forEach(k=>{
+    t.appendChild(el('<tr data-k="'+k+'"><th>'+(PIPE_LABEL[k]||k)+'</th>'
+      + '<td><input type="text" inputmode="decimal" autocomplete="off" aria-label="'+(PIPE_LABEL[k]||k)+'"></td></tr>'));
+  });
+
+  c.querySelector('#pGo').onclick = ()=>{
+    let right = 0;
+    const missed = [];
+    PIPE_ROWS.forEach(k=>{
+      const tr = t.querySelector('tr[data-k="'+k+'"]');
+      const inp = tr.querySelector('input');
+      const got = parseFloat(String(inp.value).replace(/[^0-9.\-]/g,''));
+      const want = ans[k];
+      const ok = isFinite(got) && Math.abs(got - want) <= 0.5;
+      tr.classList.add(ok ? 'ok' : 'bad');
+      inp.disabled = true;
+      if(ok) right++;
+      else {
+        missed.push((PIPE_LABEL[k]||k) + ' → ' + want.toFixed(1));
+        tr.querySelector('td').appendChild(el('<div class="ansline" style="padding-bottom:6px">'
+          + want.toFixed(1) + '</div>'));
+      }
+    });
+    const sec = Math.round((Date.now()-start)/1000);
+    const pct = Math.round(right / PIPE_ROWS.length * 100);
+    c.querySelector('#pGo').disabled = true;
+    c.querySelector('#pMsg').textContent = PIPE_ROWS.length+'칸 중 '+right+'칸 정답';
+    setTimeout(()=>gameFinish(v, gm, pct, right, PIPE_ROWS.length, sec, missed,
+      ['항공기 기체정비 배관계산 '+name+' '+pct+'점']), 1400);
+  };
+}
+
+/* ────────────────────────────────────────────────
+   게임 2 — 마이크로미터 눈금 읽기
+
+   눈금을 그려서 읽게 합니다. 읽는 방법은 영상시험 자료에 나온 그대로입니다.
+     mm   — 슬리브 1눈금 0.5mm, 딤블 1눈금 0.01mm
+     inch — 슬리브 1눈금 0.025″, 딤블 1눈금 0.001″
+   ──────────────────────────────────────────────── */
+/* m 은 micMake 가 만든 것입니다.
+     major  : 눈금 자릿수 (mm 는 1mm 칸, inch 는 0.1″ 칸) — 지금까지 지나온 칸 수
+     sub    : 그 칸 안에서 더 지나온 작은 눈금 수 (mm 는 0~1, inch 는 0~3)
+     subN   : 한 칸을 몇으로 나누는가 (mm 2 · inch 4)
+   슬리브 눈금과 아래에 적는 설명이 서로 어긋나지 않게 한 곳에서 계산합니다. */
+function micDraw(m){
+  const W = 440, H = 152, x0 = 32, y = 74, span = 250;
+  const NMAJ = 10, step = span / NMAJ;
+  let s = '<div class="fig"><svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"'
+    + ' role="img" aria-label="마이크로미터 눈금 — 읽은 값을 고르는 그림">';
+  s += '<rect x="'+(x0-12)+'" y="'+(y-28)+'" width="'+(span+34)+'" height="56" rx="8" fill="#eef2f7" stroke="#cbd5e1"/>';
+  s += '<line x1="'+(x0-6)+'" y1="'+y+'" x2="'+(x0+span+16)+'" y2="'+y+'" stroke="#334155" stroke-width="2"/>';
+  for(let i=0;i<=NMAJ;i++){
+    const x = x0 + i*step, on = i<=m.major;
+    s += '<line x1="'+x+'" y1="'+(y-19)+'" x2="'+x+'" y2="'+y+'" stroke="'+(on?'#1c2430':'#b6c2d2')
+       + '" stroke-width="'+(on?2.6:1.3)+'"/>';
+    s += '<text x="'+(x-3)+'" y="'+(y-23)+'" font-size="10.5" font-weight="700" fill="#1c2430">'+i+'</text>';
+    if(i<NMAJ){
+      for(let j=1;j<m.subN;j++){                     /* 칸 안의 작은 눈금 — 아래쪽에 그립니다 */
+        const xs = x + step*j/m.subN;
+        const sOn = (i < m.major) || (i === m.major && j <= m.sub);
+        s += '<line x1="'+xs+'" y1="'+y+'" x2="'+xs+'" y2="'+(y+13)+'" stroke="'+(sOn?'#1c2430':'#b6c2d2')
+           + '" stroke-width="'+(sOn?2.4:1.2)+'"/>';
+      }
+    }
+  }
+  /* 딤블 — 오른쪽 끝. 기준선이 가리키는 눈금이 빨간 숫자입니다. */
+  const tx = x0 + span + 20;
+  s += '<rect x="'+tx+'" y="'+(y-42)+'" width="76" height="84" rx="8" fill="#dbe4ef" stroke="#94a3b8"/>';
+  for(let k=-2;k<=2;k++){
+    const idx = ((m.thimble + k) % m.thimbleN + m.thimbleN) % m.thimbleN;
+    const yy = y + k*16;
+    s += '<line x1="'+tx+'" y1="'+yy+'" x2="'+(tx+16)+'" y2="'+yy+'" stroke="#334155" stroke-width="'+(k===0?2.6:1.3)+'"/>';
+    s += '<text x="'+(tx+22)+'" y="'+(yy+4)+'" font-size="11" font-weight="'+(k===0?800:600)+'"'
+       + ' fill="'+(k===0?'#e5484d':'#64748b')+'">'+idx+'</text>';
+  }
+  s += '<line x1="'+(x0-6)+'" y1="'+y+'" x2="'+(tx+76)+'" y2="'+y+'" stroke="#e5484d" stroke-width="1.4" stroke-dasharray="5 4"/>';
+  s += '<text x="'+x0+'" y="'+(H-10)+'" font-size="11.5" font-weight="700" fill="#6b7684">'+m.legend+'</text>';
+  return s + '</svg></div>';
+}
+function micMake(){
+  if(Math.random() < 0.5){
+    /* mm — 큰 눈금 1mm, 그 아래 반눈금 0.5mm, 딤블 0.01mm */
+    const major = ri(10), sub = ri(2), th = ri(50);
+    const val = major + sub*0.5 + th*0.01;
+    return { kind:'mm', major, sub, subN:2, thimble:th, thimbleN:50, val, dec:2,
+             txt: val.toFixed(2)+' mm', minStep:0.01, subStep:0.5,
+             legend:'슬리브 큰눈금 1 mm · 아래 반눈금 0.5 mm · 딤블 1눈금 0.01 mm',
+             how: major+' + '+(sub*0.5).toFixed(1)+' + '+(th*0.01).toFixed(2)
+                  +' = '+val.toFixed(2)+' mm' };
+  }
+  /* inch — 큰 눈금 0.1″, 그 안을 4로 나눈 0.025″, 딤블 0.001″ */
+  const major = ri(10), sub = ri(4), th = ri(25);
+  const val = major*0.1 + sub*0.025 + th*0.001;
+  return { kind:'inch', major, sub, subN:4, thimble:th, thimbleN:25, val, dec:3,
+           txt: val.toFixed(3)+'″', minStep:0.001, subStep:0.025,
+           legend:'슬리브 큰눈금 0.1″ · 그 안의 작은눈금 0.025″ · 딤블 1눈금 0.001″',
+           how: (major*0.1).toFixed(1)+' + '+(sub*0.025).toFixed(3)+' + '+(th*0.001).toFixed(3)
+                +' = '+val.toFixed(3)+'″' };
+}
+function micDistract(m){
+  /* 헷갈리기 쉬운 값으로 만듭니다 — 딤블을 잘못 읽거나 반눈금을 빠뜨린 값 */
+  const step = m.minStep, halfStep = m.subStep;
+  const cands = [ m.val + halfStep, m.val - halfStep, m.val + 10*step, m.val - 10*step,
+                  m.val + 5*step, m.val - 5*step, m.val + 20*step ];
+  const out = [];
+  shuffle(cands).forEach(x=>{
+    if(x <= 0 || out.length>=3) return;
+    const t = x.toFixed(m.dec);
+    if(t === m.val.toFixed(m.dec) || out.includes(t)) return;
+    out.push(t);
+  });
+  return out.map(t => m.kind==='mm' ? t+' mm' : t+'″');
+}
+function gameMic(v){
+  const gm = GAMES[1];
+  const N = 8;
+  const st = { i:0, right:0, missed:[], start:Date.now() };
+  step();
+  function step(){
+    if(st.i >= N){
+      const sec = Math.round((Date.now()-st.start)/1000);
+      return gameFinish(v, gm, Math.round(st.right/N*100), st.right, N, sec, st.missed);
+    }
+    const m = micMake();
+    const ch = shuffle([m.txt].concat(micDistract(m)));
+    const a = ch.indexOf(m.txt);
+    v.innerHTML='';
+    gameHead(v, gm, '<div class="muted" style="margin-top:8px">'+(st.i+1)+' / '+N
+      + ' · '+st.right+'개 맞힘</div>');
+    const c = el('<div class="card">'
+      + '<div class="qtext">아래 마이크로미터가 가리키는 측정값은?</div>'
+      + micDraw(m)
+      + '<div class="opts" id="mo"></div><div id="mx"></div></div>');
+    v.appendChild(c);
+    const box = c.querySelector('#mo');
+    ch.forEach((t,idx)=>{
+      const b = el('<button>'+t+'</button>');
+      b.onclick = ()=>{
+        const ok = idx===a;
+        box.querySelectorAll('button').forEach((x,i)=>{
+          x.disabled = true;
+          if(i===a) x.classList.add('correct');
+          if(i===idx && !ok) x.classList.add('wrong');
+        });
+        if(ok) st.right++; else st.missed.push('읽은 값 '+m.txt+' ('+m.how+')');
+        try{ if(window.FX) ok ? FX.ok(b) : FX.no(b); }catch(e){ console.warn('FX',e); }
+        const x = c.querySelector('#mx');
+        x.appendChild(el('<div class="explain"><b>'+(ok?'맞았습니다':'정답은 '+m.txt)+'</b><br>'
+          + m.how + '</div>'));
+        const nb = el('<div class="row" style="margin-top:12px"><button class="btn btn-primary">'
+          + (st.i+1>=N?'결과 보기':'다음 →')+'</button></div>');
+        x.appendChild(nb);
+        nb.querySelector('button').onclick = ()=>{ st.i++; step(); };
+      };
+      box.appendChild(b);
+    });
+  }
+}
+
+/* ────────────────────────────────────────────────
+   게임 3 — 명칭 잇기
+   자료(영상시험 pptx)에 나온 짝만 씁니다.
+   ──────────────────────────────────────────────── */
+const MATCH_SETS = [
+  { name:'지상 지원 장비', pairs:[
+    ['APU','보조동력장치 — 비행기 자체동력을 쓰는 시동용'],
+    ['GPU','외부에서 전력을 공급하는 지상동력보급장치'],
+    ['EPU','정비나 기타작업을 위해 외부 전기 동력을 공급'],
+    ['ACU','항공기에 냉·난방 공기를 공급하는 장치'],
+    ['GTC','다량의 저압 공기를 배출하는 공기터빈 시동장치'],
+    ['견인 바','항공기 견인작업에 쓰는 막대']]},
+  { name:'날개에 붙는 장치', pairs:[
+    ['윙렛','날개끝의 유도항력을 감소 — 와류 감소·연료 절감'],
+    ['트림 탭','조종력을 가하지 않아도 수평비행이 가능하게 함'],
+    ['도살핀','가로안정성을 증가시킨다'],
+    ['보틸론','딥실속(Deep Stall)을 막는다'],
+    ['드래그슈트','고항력 장치'],
+    ['보텍스 제너레이터','와류를 일으키는 고양력장치']]},
+  { name:'3축 운동', pairs:[
+    ['Pitching','키놀이 — 가로축(Y) · 승강키'],
+    ['Rolling','옆놀이 — 세로축(X) · 도움날개'],
+    ['Yawing','빗놀이 — 수직축(Z) · 방향키'],
+    ['등속도수평비행','추력 = 항력, 양력 = 중력'],
+    ['딥실속','비행기가 비정상으로 비행하는 상태'],
+    ['스와시플레이트','블레이드의 회전면을 기울여 주는 장치']]},
+  { name:'길이와 호칭', pairs:[
+    ['볼트의 호칭','바깥지름'],
+    ['너트의 호칭','결합되는 수나사의 바깥지름'],
+    ['튜브의 호칭','바깥지름(외경)'],
+    ['그립길이','볼트에서 나사가 없는 부분의 길이'],
+    ['둥근머리 리벳의 길이','머리 아래면부터 생크 끝까지'],
+    ['접시머리 리벳의 길이','머리 위에서 생크 끝까지']]},
+  { name:'기체 스테이션', pairs:[
+    ['FS (BSTA)','동체 스테이션'],
+    ['WS','날개 스테이션'],
+    ['BBL','동체버턱라인'],
+    ['BWL','동체수위선'],
+    ['조종간','조종실에서 도움날개·승강키를 움직인다'],
+    ['방향키페달','조종실에서 방향키를 움직인다']]},
+  { name:'헬리콥터', pairs:[
+    ['노타 헬기','꼬리회전날개가 없다'],
+    ['꼬리회전날개','동체 회전력에 대한 토크 상쇄, 비행방향 전환'],
+    ['병렬식 회전날개 헬리콥터','회전날개가 나란히 놓인 형식'],
+    ['동축 역회전날개 헬리콥터','같은 축에서 서로 반대로 도는 형식'],
+    ['직렬형 헬리콥터','회전날개가 앞뒤로 놓인 형식'],
+    ['스키드기어형 착륙장치','바퀴 대신 미끄럼대를 쓰는 착륙장치']]},
+];
+function gameMatch(v){
+  const gm = GAMES[2];
+  const set = pick(MATCH_SETS);
+  const pairs = set.pairs.slice();
+  const left = shuffle(pairs.map((p,i)=>({t:p[0], i})));
+  const right = shuffle(pairs.map((p,i)=>({t:p[1], i})));
+  const st = { sel:null, done:0, wrongN:0, missed:[], start:Date.now() };
+
+  gameHead(v, gm, '<div class="muted" style="margin-top:8px"><b>'+set.name+'</b>'
+    + ' · 왼쪽 이름을 누르고 오른쪽에서 짝을 고르세요. 틀린 횟수만큼 점수가 깎입니다.</div>');
+  const c = el('<div class="card"><div class="match">'
+    + '<div class="mcol" id="mL"><div class="lb">이름</div></div>'
+    + '<div class="mcol" id="mR"><div class="lb">하는 일</div></div></div>'
+    + '<div class="muted" style="margin-top:10px" id="mMsg">0 / '+pairs.length+' 짝지음</div></div>');
+  v.appendChild(c);
+  const L = c.querySelector('#mL'), R = c.querySelector('#mR');
+
+  left.forEach(o=>{
+    const b = el('<button data-i="'+o.i+'">'+o.t+'</button>');
+    b.onclick = ()=>{
+      if(b.classList.contains('done')) return;
+      L.querySelectorAll('button').forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel'); st.sel = b;
+    };
+    L.appendChild(b);
+  });
+  right.forEach(o=>{
+    const b = el('<button data-i="'+o.i+'">'+o.t+'</button>');
+    b.onclick = ()=>{
+      if(b.classList.contains('done')) return;
+      if(!st.sel){ c.querySelector('#mMsg').textContent = '왼쪽에서 이름을 먼저 고르세요.'; return; }
+      const li = st.sel.dataset.i, ok = li === b.dataset.i;
+      if(ok){
+        st.sel.classList.remove('sel'); st.sel.classList.add('done'); b.classList.add('done');
+        st.done++;
+        try{ if(window.FX) FX.ok(b); }catch(e){ console.warn('FX',e); }
+      } else {
+        st.wrongN++;
+        st.missed.push(pairs[li][0]+' 을(를) 잘못 이었습니다');
+        b.classList.add('miss'); setTimeout(()=>b.classList.remove('miss'), 420);
+        try{ if(window.FX) FX.no(b); }catch(e){ console.warn('FX',e); }
+      }
+      st.sel = null;
+      c.querySelector('#mMsg').textContent = st.done+' / '+pairs.length+' 짝지음'
+        + (st.wrongN ? ' · 틀린 횟수 '+st.wrongN : '');
+      if(st.done >= pairs.length){
+        const sec = Math.round((Date.now()-st.start)/1000);
+        const pct = Math.max(0, Math.round((pairs.length - st.wrongN) / pairs.length * 100));
+        setTimeout(()=>gameFinish(v, gm, pct, pairs.length - Math.min(st.wrongN,pairs.length),
+          pairs.length, sec, [...new Set(st.missed)],
+          ['항공기 기체정비 명칭잇기 '+set.name+' '+pct+'점']), 500);
+      }
+    };
+    R.appendChild(b);
   });
 }
 
-$('#hdSub').textContent = `문항 ${QUESTIONS.length} · 개념 ${LEARN.length}`;
-render('learn');
+/* ══════════════════════════════════════════════════════════════
+   잠금 해제
+   정적 호스팅에서는 화면에 비밀번호 칸만 두면 보호가 되지 않습니다
+   (파일 주소를 직접 치면 그대로 받아지기 때문입니다).
+   그래서 자료 파일 자체를 AES-GCM 으로 암호화해 두고 여기서 실제로 복호화합니다.
+
+   저장 키가 두 개인 이유
+     LOCK_KEY   이 도구에서 성공한 암호
+     SHARED_KEY 도구 전체 공용 — 도구가 모두 같은 주소에 있어 localStorage 를
+                공유하므로, 어디서든 한 번 열면 나머지도 그냥 열립니다.
+   실패해도 공용 키는 지우지 않습니다 — 여기서 안 맞는 암호가 다른 도구에서는
+   맞을 수 있어, 지우면 남의 기억까지 날리게 됩니다.
+   ══════════════════════════════════════════════════════════════ */
+const LOCK_KEY='aam_v1_pw', SHARED_KEY='hong_pw_v1';
+const b64 = x => Uint8Array.from(atob(x), ch=>ch.charCodeAt(0));
+const isoOf = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const mondayOf = d => { const x=new Date(d); x.setDate(x.getDate()-((x.getDay()+6)%7)); x.setHours(0,0,0,0); return x; };
+const prettyCode = s => s.length===8 ? s.slice(0,4)+' '+s.slice(4) : s;
+let LOCK_INFO = null;
+
+/* 감싼 키들을 훑어 맞는 것을 찾습니다. salt 를 공유하므로 PBKDF2 는 딱 1회 돕니다. */
+async function findKey(kek, keys){
+  for(const k of keys){
+    try{
+      const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(k.iv)}, kek, b64(k.blob));
+      return JSON.parse(new TextDecoder().decode(plain));
+    }catch(_){}
+  }
+  throw new Error('BADPW');
+}
+/* 교사용으로 열면 그 주 학생 코드를 계산해 보여 줍니다.
+   마스터 시크릿은 교사용으로 감싼 안쪽에만 있어 학생 코드로는 계산할 수 없습니다. */
+async function weekCode(msB64, mon){
+  const k = await crypto.subtle.importKey('raw', b64(msB64), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k,
+    new TextEncoder().encode((LOCK_INFO.prefix||'HONGW|') + isoOf(mon))));
+  const n = ((sig[0]<<24)>>>0) + (sig[1]<<16) + (sig[2]<<8) + sig[3];
+  return String(n % 90000000 + 10000000);
+}
+
+async function unlockBank(pw, quiet){
+  const msg = $('#lockMsg');
+  const say = (t,c)=>{ if(!quiet || c==='bad'){ msg.innerHTML=t;
+    msg.style.color = c==='bad' ? 'var(--no)' : (c==='ok' ? 'var(--ok)' : 'var(--dim)'); } };
+  try{
+    say('여는 중…');
+    const blob = await (await fetch('bank.enc',{cache:'no-store'})).json();
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+    const kek = await crypto.subtle.deriveKey(
+      {name:'PBKDF2', salt:b64(blob.kdf.salt), iterations:blob.kdf.iter, hash:'SHA-256'},
+      base, {name:'AES-GCM', length:256}, false, ['decrypt']);
+    const info = await findKey(kek, blob.keys);
+    const today = isoOf(new Date());
+    if(info.nbf && today < info.nbf){ const e=new Error('NOTYET'); e.when=info.nbf; throw e; }
+    if(info.exp && today >= info.exp){ const e=new Error('EXPIRED'); e.when=info.exp; throw e; }
+    LOCK_INFO = info;
+
+    const CK = await crypto.subtle.importKey('raw', b64(info.ck), {name:'AES-GCM'}, false, ['decrypt']);
+    const sealed = b64(blob.data);
+    const plain = new Uint8Array(await crypto.subtle.decrypt(
+      {name:'AES-GCM', iv:sealed.slice(0,12)}, CK, sealed.slice(12)));
+    const txt = await new Response(new Blob([plain]).stream()
+      .pipeThrough(new DecompressionStream('gzip'))).text();
+
+    const payload = JSON.parse(txt);
+    LEARN = payload.learn || [];
+    QUESTIONS = payload.questions || [];
+
+    try{
+      localStorage.setItem(LOCK_KEY, pw);
+      if(!info.exp) localStorage.setItem(SHARED_KEY, pw);   /* 만료되는 코드는 공용에 넣지 않습니다 */
+    }catch(e){}
+
+    let extra = '';
+    if(!quiet && info.role==='teacher' && info.ms){
+      const cd = await weekCode(info.ms, mondayOf(new Date()));
+      extra = '<br><b style="color:var(--pu)">이번 주 학생 코드 — ' + prettyCode(cd) + '</b>';
+    }
+    say('✅ 자료 '+LEARN.length+'장 · 문항 '+QUESTIONS.length+'개가 열렸어요!' + extra, 'ok');
+    boot();
+    setTimeout(()=>{ $('#lock').hidden = true; }, extra ? 2600 : 400);
+    return true;
+  }catch(e){
+    const m = e && e.message;
+    if(m==='EXPIRED')     say('사용 기간이 끝난 코드예요('+e.when+'까지). 선생님께 이번 주 코드를 받으세요.','bad');
+    else if(m==='NOTYET') say('아직 쓸 수 없는 코드예요. '+e.when+'부터 쓸 수 있어요.','bad');
+    else                  say('코드가 맞지 않아요.','bad');
+    try{ localStorage.removeItem(LOCK_KEY); }catch(_){}     /* 공용 키는 건드리지 않습니다 */
+    return false;
+  }
+}
+
+function boot(){
+  $('#app').hidden = false;
+  $('#hdSub').textContent = '자료 '+LEARN.length+'장 · 문항 '+QUESTIONS.length
+    + (window.FixOrder && FixOrder.on ? ' · 수업용 고정 순서' : '');
+  render('learn');
+}
+
+$('#lockGo').onclick = ()=> unlockBank($('#lockPw').value.replace(/\s+/g,''));
+$('#lockPw').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#lockGo').click(); });
+
+/* 문항 수 표시 + 이전에 열었으면 조용히 자동 해제 */
+fetch('bank.enc',{cache:'no-store'}).then(r=>r.json())
+  .then(b=>{ $('#lockN').textContent = '자료 '+(b.secs||0)+'장 · 문항 '+(b.n||0)+'개';
+             document.body.dataset.build = b.build || ''; })
+  .catch(()=>{ $('#lockN').textContent = '(준비 중)'; });
+
+(function(){
+  try{
+    const a = localStorage.getItem(LOCK_KEY), b = localStorage.getItem(SHARED_KEY), t = [];
+    if(a) t.push(a);
+    if(b && b!==a) t.push(b);
+    (function nextTry(i){
+      if(i>=t.length) return;
+      unlockBank(t[i], true).then(ok=>{ if(!ok) nextTry(i+1); });
+    })(0);
+  }catch(e){}
+})();
 </script>
 
 <!-- 공용 위젯 — 순서 그대로 두세요 (규약 1 · 3 · 3-1) -->
-<script src="https://hongyul67-cpu.github.io/links/collector.js"  data-tool="항공기 기체정비"></script>
+<script src="https://hongyul67-cpu.github.io/links/collector.js"  data-tool="항공기 기체정비 마스터"></script>
 <script src="https://hongyul67-cpu.github.io/links/fx.js"></script>
 <script src="https://hongyul67-cpu.github.io/links/rank.js"       data-tool="항공기 기체정비" data-pace="class"></script>
 <script src="https://hongyul67-cpu.github.io/links/class-mode.js"></script>

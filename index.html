@@ -141,7 +141,7 @@ table.calc tr.bad td{background:#fdeeee}
 }
 </style>
 </head>
-<body data-build="8ce19332">
+<body data-build="ea247307">
 
 <div id="lock">
   <div class="box">
@@ -488,9 +488,15 @@ const GAMES = [
     desc:'도면 치수를 보고 A~G 와 S1~S3 를 계산합니다. 채점은 한 번.', run:gamePipe },
   { id:'mic',  emoji:'📏', name:'마이크로미터 눈금 읽기',
     desc:'슬리브와 딤블을 읽어 측정값을 맞힙니다. mm 와 inch 둘 다 나옵니다.', run:gameMic },
+  { id:'vern', emoji:'📐', name:'버니어 캘리퍼스 눈금 읽기',
+    desc:'어미자와 딱 맞는 아들자 눈금을 찾아 읽습니다. 미터식·인치식 4가지.', run:gameVern },
   { id:'name', emoji:'🧰', name:'명칭 잇기',
     desc:'장비·장치의 이름과 하는 일을 짝지어 붙입니다.', run:gameMatch },
 ];
+
+/* 게임을 번호가 아니라 이름으로 찾습니다 — 게임을 하나 끼워 넣었더니
+   GAMES[2] 가 다른 게임을 가리키게 된 적이 있습니다. */
+const GM = id => GAMES.find(g => g.id === id);
 
 function renderGameMenu(v){
   v.appendChild(el('<div class="card"><h3>🎮 게임</h3>'
@@ -597,7 +603,7 @@ const PIPE_ROWS = ['A','B','C','D','E','F','G','S1','S2','S3','T'];
 const PIPE_LABEL = { T:'전체길이' };
 
 function gamePipe(v){
-  const gm = GAMES[0];
+  const gm = GM('pipe');
   const p = pick(PIPE_SRC);
   const [name, R, d1, d2, d3, d4] = p;
   const ans = pipeCalc(R, d1, d2, d3, d4);
@@ -731,7 +737,7 @@ function micDistract(m){
   return out.map(t => m.kind==='mm' ? t+' mm' : t+'″');
 }
 function gameMic(v){
-  const gm = GAMES[1];
+  const gm = GM('mic');
   const N = 8;
   const st = { i:0, right:0, missed:[], start:Date.now() };
   step();
@@ -777,7 +783,183 @@ function gameMic(v){
 }
 
 /* ────────────────────────────────────────────────
-   게임 3 — 명칭 잇기
+   게임 3 — 버니어 캘리퍼스 눈금 읽기
+
+   아들자(버니어)는 어미자보다 눈금 사이가 조금씩 좁아서, 아들자 눈금 가운데
+   딱 하나만 어미자 눈금과 일직선으로 맞습니다. 그 눈금 번호 × 최소 측정값이
+   소수점 아래 값입니다.
+
+     미터식 1/20  — 어미자 1mm,     아들자 20눈금(19mm 를 20등분)   → 0.05 mm
+     미터식 1/50  — 어미자 1mm,     아들자 50눈금(49mm 를 50등분)   → 0.02 mm
+     인치 분수식  — 어미자 1/16″,   아들자 8눈금(7/16″ 를 8등분)    → 1/128″
+     인치 소수식  — 어미자 0.025″,  아들자 25눈금(24칸을 25등분)    → 0.001″
+
+   ⚠ 그림에서 맞는 눈금을 색으로 표시하지 않습니다. 그것을 찾는 것이 문제이기
+     때문입니다(힌트에 정답 금지). 대신 눈금 위치는 계산해서 정확히 맞춰 그립니다 —
+     아들자 k번 눈금은 어미자 (mainIdx + k) 번 눈금과 정확히 겹칩니다.
+   ──────────────────────────────────────────────── */
+const VERNIERS = [
+  { id:'m20',  label:'미터식 1/20',  mainVal:1,     mainPx:23, mainLabelEvery:5,
+    vernN:20, vernSpan:19, vernLabelEvery:5,  lc:0.05,  unit:'mm', dec:2, maxMain:14,
+    lcTxt:'0.05 mm', mainTxt:i=>i+'', headTxt:'어미자 1 mm · 아들자 20눈금 → 최소 0.05 mm' },
+  { id:'m50',  label:'미터식 1/50',  mainVal:1,     mainPx:14, mainLabelEvery:5,
+    vernN:50, vernSpan:49, vernLabelEvery:10, lc:0.02,  unit:'mm', dec:2, maxMain:9,
+    lcTxt:'0.02 mm', mainTxt:i=>i+'', headTxt:'어미자 1 mm · 아들자 50눈금 → 최소 0.02 mm' },
+  { id:'if',   label:'인치 분수식',  mainVal:1/16,  mainPx:26, mainLabelEvery:4,
+    vernN:8,  vernSpan:7,  vernLabelEvery:1,  lc:1/128, unit:'inch', frac:true, maxMain:20,
+    lcTxt:'1/128″', mainTxt:i=>fracTxt(i*8), headTxt:'어미자 1/16″ · 아들자 8눈금 → 최소 1/128″' },
+  { id:'id',   label:'인치 소수식',  mainVal:0.025, mainPx:17, mainLabelEvery:4,
+    vernN:25, vernSpan:24, vernLabelEvery:5,  lc:0.001, unit:'inch', dec:3, maxMain:14,
+    lcTxt:'0.001″', mainTxt:i=>(i*0.025).toFixed(3).replace(/0$/,''),
+    headTxt:'어미자 0.025″ · 아들자 25눈금 → 최소 0.001″' },
+];
+function gcd(a,b){ return b ? gcd(b, a%b) : a; }
+/* 128분의 몇인가를 기약분수 문자열로 — 25/64″ · 1 3/64″ 처럼 */
+function fracTxt(n128){
+  const whole = Math.floor(n128/128), rem = n128 % 128;
+  if(!rem) return whole + '″';
+  const g = gcd(rem, 128);
+  return (whole ? whole+' ' : '') + (rem/g) + '/' + (128/g) + '″';
+}
+function vernVal(V, mainIdx, alignIdx){
+  return V.frac ? mainIdx*8 + alignIdx : mainIdx*V.mainVal + alignIdx*V.lc;
+}
+/* 보기에 쓰는 표기.
+   분수식은 약분하지 않고 늘 128분수로 보여 줍니다 — 약분해서 보여 주면
+   78/128 만 39/64 가 되어 보기 넷 중 정답 하나만 분모가 달라 눈에 띕니다.
+   약분한 꼴(교재가 쓰는 25/64 같은)은 해설에서 보여 줍니다. */
+function vernTxt(V, mainIdx, alignIdx){
+  if(V.frac) return (mainIdx*8 + alignIdx) + '/128″';
+  const v = vernVal(V, mainIdx, alignIdx);
+  return v.toFixed(V.dec) + (V.unit==='mm' ? ' mm' : '″');
+}
+function vernDraw(V, mainIdx, alignIdx){
+  const pad = 2;
+  const from = Math.max(0, mainIdx - pad), to = mainIdx + V.vernSpan + pad;
+  /* 왼쪽에 '어미자/아들자' 글자가 들어갈 자리를 비워 둡니다 — 26 으로 두었더니 잘렸습니다. */
+  const x0 = 52, W = (to-from)*V.mainPx + x0 + 30, H = 168;
+  const yM = 74, yV = 92;                       /* 어미자 아랫변 · 아들자 윗변 */
+  const px = i => x0 + (i-from)*V.mainPx;
+  let s = '<div class="fig"><svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"'
+    + ' role="img" aria-label="버니어 캘리퍼스 눈금 — 어미자와 아들자">';
+  /* 어미자 */
+  s += '<rect x="'+(x0-14)+'" y="'+(yM-40)+'" width="'+((to-from)*V.mainPx+28)+'" height="40"'
+    + ' fill="#eef2f7" stroke="#cbd5e1"/>';
+  for(let i=from;i<=to;i++){
+    const big = (i % V.mainLabelEvery)===0;
+    s += '<line x1="'+px(i)+'" y1="'+(yM-(big?22:13))+'" x2="'+px(i)+'" y2="'+yM+'"'
+      + ' stroke="#1c2430" stroke-width="'+(big?1.9:1.1)+'"/>';
+    if(big) s += '<text x="'+px(i)+'" y="'+(yM-26)+'" font-size="10.5" font-weight="700"'
+      + ' text-anchor="middle" fill="#1c2430">'+V.mainTxt(i)+'</text>';
+  }
+  s += '<text x="'+(x0-10)+'" y="'+(yM-4)+'" font-size="10.5" font-weight="800" fill="#6b7684"'
+    + ' text-anchor="end">어미자</text>';
+  /* 아들자 — 0눈금이 어미자 위 어디에 서 있는지가 곧 측정값이다 */
+  const vzero = px(mainIdx + alignIdx*V.lc/V.mainVal);
+  const vstep = V.mainPx * V.vernSpan / V.vernN;
+  s += '<rect x="'+(vzero-14)+'" y="'+yV+'" width="'+(V.vernSpan*V.mainPx+28)+'" height="40"'
+    + ' fill="#e7ecf5" stroke="#94a3b8"/>';
+  for(let k=0;k<=V.vernN;k++){
+    const x = vzero + k*vstep, big = (k % V.vernLabelEvery)===0;
+    s += '<line x1="'+x+'" y1="'+yV+'" x2="'+x+'" y2="'+(yV+(big?22:13))+'"'
+      + ' stroke="#1c2430" stroke-width="'+(big?1.9:1.1)+'"/>';
+    if(big) s += '<text x="'+x+'" y="'+(yV+34)+'" font-size="10.5" font-weight="700"'
+      + ' text-anchor="middle" fill="#1c2430">'+k+'</text>';
+  }
+  s += '<text x="'+(x0-10)+'" y="'+(yV+16)+'" font-size="10.5" font-weight="800" fill="#6b7684"'
+    + ' text-anchor="end">아들자</text>';
+  s += '<text x="'+x0+'" y="'+(H-6)+'" font-size="11.5" font-weight="700" fill="#6b7684">'
+    + V.headTxt + '</text>';
+  return s + '</svg></div>';
+}
+function vernMake(){
+  const V = pick(VERNIERS);
+  const mainIdx = 1 + ri(V.maxMain);
+  const alignIdx = ri(V.vernN);              /* 어미자와 딱 맞는 아들자 눈금 번호 */
+  const n128 = mainIdx*8 + alignIdx;
+  const red = V.frac && fracTxt(n128) !== n128+'/128″'
+              ? ' — 약분하면 <b>'+fracTxt(n128)+'</b>' : '';
+  return { V, mainIdx, alignIdx, txt: vernTxt(V, mainIdx, alignIdx),
+    how: (V.frac ? '어미자 '+fracTxt(mainIdx*8)+'(='+(mainIdx*8)+'/128″) + 아들자 '+alignIdx+'눈금 × 1/128″'
+                 : '어미자 '+(mainIdx*V.mainVal).toFixed(V.dec).replace(/\.?0+$/,'')
+                   + (V.unit==='mm'?' mm':'″') + ' + 아들자 '+alignIdx+'눈금 × '+V.lcTxt)
+         + ' = ' + vernTxt(V, mainIdx, alignIdx) + red };
+}
+function vernDistract(m){
+  const V = m.V;
+  /* 흔한 실수 — 맞는 눈금을 한 칸 옆으로 읽기 · 어미자를 한 칸 잘못 읽기 ·
+     아들자 숫자 묶음을 헷갈리기 */
+  const near = [[0,1],[0,-1],[0,V.vernLabelEvery],[0,-V.vernLabelEvery],[1,-1]];
+  const far  = [[1,0],[-1,0]];              /* 어미자만 한 칸 — 분수식에서 정답과 짝수/홀수가 같다 */
+  const mk = d => {
+    const mi = m.mainIdx + d[0], ai = m.alignIdx + d[1];
+    if(mi < 0 || ai < 0 || ai >= V.vernN) return null;
+    const t = vernTxt(V, mi, ai);
+    return t === m.txt ? null : t;
+  };
+  /* 분수식은 기약분수로 보여 주는데, 보기를 전부 ±홀수로만 만들면
+     정답만 분모가 달라져 눈에 띈다(78/128 → 39/64 인데 나머지는 /128).
+     그래서 어미자만 옮긴 보기(±8/128 = 짝수)를 반드시 하나 먼저 넣는다. */
+  const order = V.frac ? shuffle(far).concat(shuffle(near))
+                       : shuffle(near.concat(far));
+  const out = [];
+  order.forEach(d=>{
+    if(out.length>=3) return;
+    const t = mk(d);
+    if(t && !out.includes(t)) out.push(t);
+  });
+  return out;
+}
+function gameVern(v){
+  const gm = GM('vern');
+  const N = 8;
+  const st = { i:0, right:0, missed:[], start:Date.now() };
+  step();
+  function step(){
+    if(st.i >= N){
+      const sec = Math.round((Date.now()-st.start)/1000);
+      return gameFinish(v, gm, Math.round(st.right/N*100), st.right, N, sec, st.missed);
+    }
+    const m = vernMake();
+    const ds = vernDistract(m);
+    if(ds.length < 3) return step();               /* 보기를 못 채우면 다시 뽑는다 */
+    const ch = shuffle([m.txt].concat(ds));
+    const a = ch.indexOf(m.txt);
+    v.innerHTML='';
+    gameHead(v, gm, '<div class="muted" style="margin-top:8px">'+(st.i+1)+' / '+N
+      + ' · '+st.right+'개 맞힘 · <b>'+m.V.label+'</b></div>');
+    const c = el('<div class="card">'
+      + '<div class="qtext">아들자 눈금 가운데 어미자와 <u>딱 맞는</u> 것을 찾아 읽으면?</div>'
+      + vernDraw(m.V, m.mainIdx, m.alignIdx)
+      + '<div class="opts" id="vo"></div><div id="vx"></div></div>');
+    v.appendChild(c);
+    const box = c.querySelector('#vo');
+    ch.forEach((t,idx)=>{
+      const b = el('<button>'+t+'</button>');
+      b.onclick = ()=>{
+        const ok = idx===a;
+        box.querySelectorAll('button').forEach((x,i)=>{
+          x.disabled = true;
+          if(i===a) x.classList.add('correct');
+          if(i===idx && !ok) x.classList.add('wrong');
+        });
+        if(ok) st.right++; else st.missed.push(m.V.label+' '+m.txt+' ('+m.how+')');
+        try{ if(window.FX) ok ? FX.ok(b) : FX.no(b); }catch(e){ console.warn('FX',e); }
+        const x = c.querySelector('#vx');
+        x.appendChild(el('<div class="explain"><b>'+(ok?'맞았습니다':'정답은 '+m.txt)+'</b><br>'
+          + '어미자와 맞는 아들자 눈금은 <b>'+m.alignIdx+'번</b>입니다.<br>'+m.how+'</div>'));
+        const nb = el('<div class="row" style="margin-top:12px"><button class="btn btn-primary">'
+          + (st.i+1>=N?'결과 보기':'다음 →')+'</button></div>');
+        x.appendChild(nb);
+        nb.querySelector('button').onclick = ()=>{ st.i++; step(); };
+      };
+      box.appendChild(b);
+    });
+  }
+}
+
+/* ────────────────────────────────────────────────
+   게임 4 — 명칭 잇기
    자료(영상시험 pptx)에 나온 짝만 씁니다.
    ──────────────────────────────────────────────── */
 const MATCH_SETS = [
@@ -825,7 +1007,7 @@ const MATCH_SETS = [
     ['스키드기어형 착륙장치','바퀴 대신 미끄럼대를 쓰는 착륙장치']]},
 ];
 function gameMatch(v){
-  const gm = GAMES[2];
+  const gm = GM('name');
   const set = pick(MATCH_SETS);
   const pairs = set.pairs.slice();
   const left = shuffle(pairs.map((p,i)=>({t:p[0], i})));

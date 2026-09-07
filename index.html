@@ -27,6 +27,17 @@ header .sub{color:var(--dim);font-size:13px}
 .tab{padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);
      cursor:pointer;font-weight:700;font-size:14px;color:var(--dim)}
 .tab.on{background:var(--pri);border-color:var(--pri);color:#fff}
+/* 📽️ 전자칠판 — .tab 이 아니라 따로 둡니다(.tab 은 data-view 로 화면을 바꾸는 단추라서). */
+.bpbtn{padding:9px 14px;border:1px solid #b58900;border-radius:999px;background:#fff8e1;
+  color:#7a5b00;font:inherit;font-weight:800;cursor:pointer;margin-left:auto}
+.bpbtn:hover{background:#ffefb8}
+/* 전자칠판이 열려 있는 동안 남는 떠 있는 위젯을 마저 가립니다.
+   board-pro.js 는 #bb-btn · .tr-btn · .cm-launch · #rk-badge 넷만 가리는데,
+   기록 초기화(#rb-btn)와 소리(#fxSnd)가 슬라이드 위에 그대로 남습니다.
+   공용 파일(board-pro.js · reset.js · fx.js)은 건드리지 않고 여기서만 가립니다.
+   지우지 않고 visibility 로 가리는 것도 공용 파일과 같은 방식입니다(높이를 재는 곳이 있어서). */
+body.bp-open #rb-btn,
+body.bp-open #fxSnd{visibility:hidden!important;pointer-events:none!important}
 
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
       padding:16px 18px;margin-bottom:12px}
@@ -141,7 +152,7 @@ table.calc tr.bad td{background:#fdeeee}
 }
 </style>
 </head>
-<body data-build="ea247307">
+<body data-build="609d7c98">
 
 <div id="lock">
   <div class="box">
@@ -169,6 +180,7 @@ table.calc tr.bad td{background:#fdeeee}
     <button class="tab"    data-view="practice">✏️ 연습 8문항</button>
     <button class="tab"    data-view="exam">🏁 종합시험 20문항</button>
     <button class="tab"    data-view="wrong">📕 오답노트</button>
+    <button class="bpbtn" id="boardBtn" type="button" title="교실 화면용 슬라이드">📽️ 전자칠판</button>
   </div>
 
   <div id="view"></div>
@@ -222,6 +234,38 @@ document.querySelectorAll('.tab').forEach(t=>{
     render(t.dataset.view);
   };
 });
+document.getElementById('boardBtn').onclick = openBoardPro;
+
+/* ══════════════════ 📽️ 전자칠판 ══════════════════
+   배우기(LEARN)는 학생이 혼자 읽는 글이고, 이쪽은 교실 앞에 띄우는 슬라이드입니다.
+   같은 내용을 수업 흐름으로 묶어 lesson.js 에 따로 썼습니다(배우기는 그대로 둡니다).
+   화면은 board-pro.js — 펜·형광펜·지우개·가리개·타이머·번호뽑기·전체화면이 붙어 있습니다.
+   이 덱은 공개문제·영상시험 자료에서 만든 것이라 bank.enc 잠금과 무관하게 열립니다. */
+function openBoardPro(){
+  if(!window.BoardPro || !(window.LESSON||[]).length){
+    alert('수업자료를 불러오지 못했습니다. 새로고침해 보세요.'); return;
+  }
+  const ALL = window.LESSON, FIG = window.FIGS || {};
+  const units = [...new Set(ALL.map(s=>s.u))];
+  const menu = units.map(u=>{
+    const list = ALL.filter(s=>s.u===u);
+    return { icon:'📊', title:u, desc:'슬라이드 '+list.length+'장 · '+list[0].t,
+             run:{ kind:'lesson', deck:list } };
+  });
+  menu.push({ icon:'📚', wide:true, title:'전체 이어서 ('+ALL.length+'장)',
+              desc:'실기 공개문제부터 검사·취급까지 순서대로 진행합니다.',
+              run:{ kind:'lesson', deck:ALL } });
+  menu.push({ icon:'⬜', wide:true, title:'빈 칠판',
+              desc:'슬라이드 없이 판서만. 계산을 풀어 보일 때.',
+              run:{ kind:'blank' } });
+  BoardPro.open({
+    title:'🖥️ 항공기 기체정비 · 전자칠판',
+    sub:'요점 → <b>발문</b> → 퀴즈 → 정답을 하나씩 엽니다. 화면 어디든 바로 판서됩니다.<br>'+
+        '요점 속 <b>파란 빈칸</b>은 눌러야 답이 보입니다.',
+    menu: menu,
+    fig: s => (s.fig && FIG[s.fig]) ? FIG[s.fig]() : ''
+  });
+}
 
 function render(view){
   if(tick){ clearInterval(tick); tick=null; }
@@ -1131,6 +1175,14 @@ async function unlockBank(pw, quiet){
     LEARN = payload.learn || [];
     QUESTIONS = payload.questions || [];
 
+    /* 📽️ 전자칠판 원고 — lesson.js 를 파일로 두지 않고 여기서 실행합니다.
+       (전역 const 를 선언하는 파일이라 두 번 실행하면 「이미 선언됨」으로 터집니다.
+        그래서 한 번만 실행합니다.) */
+    if(payload.lesson && !window.LESSON){
+      try{ (0, eval)(payload.lesson); }
+      catch(e){ console.error('전자칠판 원고를 불러오지 못했습니다', e); }
+    }
+
     try{
       localStorage.setItem(LOCK_KEY, pw);
       if(!info.exp) localStorage.setItem(SHARED_KEY, pw);   /* 만료되는 코드는 공용에 넣지 않습니다 */
@@ -1183,6 +1235,11 @@ fetch('bank.enc',{cache:'no-store'}).then(r=>r.json())
   }catch(e){}
 })();
 </script>
+
+<!-- 📽️ 전자칠판 — 화면(board-pro.js · 공용 뷰어, 고치지 말 것).
+     원고(lesson.js)는 여기서 부르지 않습니다. 공개문제 요구사항·지급재료·구술시험 답이
+     들어 있어 bank.enc 안에 같이 잠가 두고, 잠금이 풀릴 때 실행합니다. -->
+<script src="board-pro.js"></script>
 
 <!-- 공용 위젯 — 순서 그대로 두세요 (규약 1 · 3 · 3-1) -->
 <script src="https://hongyul67-cpu.github.io/links/collector.js"  data-tool="항공기 기체정비 마스터"></script>

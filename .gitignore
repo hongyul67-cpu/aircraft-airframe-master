@@ -11,3 +11,6 @@ _src/
 
 # 평문 원본 — 커밋 금지 (bank.enc 만 배포)
 content.js
+
+# 전자칠판 원고 평문 — 커밋 금지 (bank.enc 안에 같이 들어갑니다)
+lesson.js

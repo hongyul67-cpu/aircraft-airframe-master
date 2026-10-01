@@ -14,3 +14,6 @@ content.js
 
 # 전자칠판 원고 평문 — 커밋 금지 (bank.enc 안에 같이 들어갑니다)
 lesson.js
+
+# 그림 모음 평문 — 커밋 금지 (공개문제 도면 · bank.enc 안에 같이 들어갑니다)
+figs.js

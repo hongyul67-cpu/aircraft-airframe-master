@@ -50,7 +50,8 @@
 
 | 파일 | 무엇 |
 |---|---|
-| `lesson.js` | **원고** — `FIGS`(그림) · `LESSON`(슬라이드). 여기만 고칩니다 |
+| `lesson.js` | **원고** — `LESSON`(슬라이드). 그림은 `fig:'키'` 로 figs.js 에서 부릅니다 |
+| `figs.js` | **그림 72장** — 배우기 카드(69장)와 슬라이드(34장)가 같은 그림을 씁니다(links/fig.js 규격). 슬라이드는 정답 이름표를 ? 로 가립니다 |
 | `board-pro.js` | **화면** — `automation-plc-exam` 에서 가져온 **공용 뷰어. 고치지 마세요** |
 
 슬라이드 한 장의 모양은 `lesson.js` 맨 위 주석에 있습니다.
@@ -119,10 +120,10 @@
 받아갈 수 있기 때문입니다. 암호는 도구 공용이고, 한 기기에서 한 번 열면 나머지 도구도 열립니다.
 
 ```powershell
-python build_lock.py          # content.js(평문) -> bank.enc
+python build_lock.py          # content.js · lesson.js · figs.js(평문) -> bank.enc
 ```
 
-`content.js` 는 `.gitignore` 에 있습니다. **커밋하지 마세요.**
+`content.js` · `lesson.js` · `figs.js` 는 `.gitignore` 에 있습니다. **커밋하지 마세요.**
 고쳤으면 반드시 `build_lock.py` 를 다시 돌려야 배포본에 반영됩니다.
 
 ---

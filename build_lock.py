@@ -1,4 +1,4 @@
-# 배우기·문항 원본(content.js) + 전자칠판 원고(lesson.js) -> 암호화(bank.enc)
+# 배우기·문항 원본(content.js) + 전자칠판 원고(lesson.js) + 그림(figs.js) -> 암호화(bank.enc)
 #
 #   python build_lock.py
 #
@@ -17,7 +17,7 @@
 #   시크릿·기준일·접두어는 _weekly/secret.json 에 모아 두고 모든 도구가 함께 쓴다.
 #   그래서 어느 도구에서든 같은 8자리가 통하고, 다시 빌드해도 코드가 바뀌지 않는다.
 #
-# 주의: 평문 content.js 와 lesson.js 는 .gitignore 에 있다. 절대 커밋하지 말 것.
+# 주의: 평문 content.js · lesson.js · figs.js 는 .gitignore 에 있다. 절대 커밋하지 말 것.
 #       암호를 이 스크립트에 적어 두지 말 것 - 공개 저장소에 그대로 남는다.
 import io, os, re, json, gzip, base64, argparse, sys, secrets, subprocess, tempfile
 from datetime import date
@@ -44,7 +44,9 @@ def extract_json():
         # 전자칠판 원고도 같이 잠근다 - 공개문제 요구사항·지급재료·구술시험 답이 들어 있어
         # 평문으로 올리면 파일 주소를 직접 쳐서 그대로 받아갈 수 있다(content.js 와 같은 이유).
         "const lesson = fs.existsSync('./lesson.js') ? fs.readFileSync('./lesson.js','utf8') : '';\n"
-        "process.stdout.write(JSON.stringify({v:1, learn:c.LEARN, questions:c.QUESTIONS, lesson}));\n"
+        # 그림 모음(figs.js)도 같이 잠근다 - 공개문제 도면과 구술시험 답이 그림에 들어 있다.
+        "const figs = fs.existsSync('./figs.js') ? fs.readFileSync('./figs.js','utf8') : '';\n"
+        "process.stdout.write(JSON.stringify({v:1, learn:c.LEARN, questions:c.QUESTIONS, lesson, figs}));\n"
     )
     with tempfile.NamedTemporaryFile("w", suffix=".js", dir=HERE, delete=False, encoding="utf-8") as f:
         f.write(driver)

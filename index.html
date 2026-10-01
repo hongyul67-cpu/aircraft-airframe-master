@@ -7,6 +7,8 @@
 <meta name="description" content="항공기체정비기능사 배우기 · 배관 길이 계산 · 눈금 읽기 · 종합시험">
 <!-- 수업용 「모두 같은 문제」 — 다른 공용 스크립트보다 먼저 -->
 <script src="https://hongyul67-cpu.github.io/links/fixorder.js"></script>
+<!-- 그림 도우미(공용) — 그림 모음 figs.js 는 bank.enc 안에 잠겨 있어 잠금이 풀릴 때 실행합니다 -->
+<script src="https://hongyul67-cpu.github.io/links/fig.js"></script>
 <style>
 :root{
   --bg:#f5f6f8; --card:#fff; --line:#e2e5ea; --tx:#1c2430; --dim:#6b7684;
@@ -89,6 +91,8 @@ table.tb td:not(:empty){white-space:normal}
       cursor:pointer;font-weight:700;font-size:13.5px;color:var(--dim)}
 .unit.on{background:var(--pu);border-color:var(--pu);color:#fff}
 .srcline{font-size:12px;color:var(--dim);margin-top:10px}
+/* 배우기 카드 그림(figs.js) — 제목 바로 아래, 글보다 먼저 */
+.lfig{margin:10px 0 14px}
 
 /* 게임 */
 .gmenu{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
@@ -150,7 +154,7 @@ table.calc tr.bad td{background:#fdeeee}
 }
 </style>
 </head>
-<body data-build="609d7c98">
+<body data-build="6128a383">
 
 <div id="lock">
   <div class="box">
@@ -244,7 +248,7 @@ function openBoardPro(){
   if(!window.BoardPro || !(window.LESSON||[]).length){
     alert('수업자료를 불러오지 못했습니다. 새로고침해 보세요.'); return;
   }
-  const ALL = window.LESSON, FIG = window.FIGS || {};
+  const ALL = window.LESSON;
   const units = [...new Set(ALL.map(s=>s.u))];
   const menu = units.map(u=>{
     const list = ALL.filter(s=>s.u===u);
@@ -262,7 +266,8 @@ function openBoardPro(){
     sub:'요점 → <b>발문</b> → 퀴즈 → 정답을 하나씩 엽니다. 화면 어디든 바로 판서됩니다.<br>'+
         '요점 속 <b>파란 빈칸</b>은 눌러야 답이 보입니다.',
     menu: menu,
-    fig: s => (s.fig && FIG[s.fig]) ? FIG[s.fig]() : ''
+    /* 그림은 figs.js — 배우기 카드와 같은 그림. 빈칸 정답이 되는 이름표는 ? 로 가린다 */
+    fig: s => (s.fig && window.FIG && FIG.has(s.fig)) ? FIG.svgOf(s.fig, {labels:false}) : ''
   });
 }
 
@@ -290,6 +295,13 @@ function wrapTables(root){
 /* ══════════════════ 배우기 ══════════════════
    정답을 다 보여 주는 단계입니다. 테스트보다 반드시 앞에 둡니다. */
 let learnUnit = null;
+/* 그 카드에 붙는 그림(figs.js 의 cards: ['단원|제목']) — 누르면 크게 */
+function learnFigs(s){
+  if(!window.FIG || !window.FIGS) return '';
+  const id = s.u+'|'+s.t;
+  const keys = Object.keys(FIGS).filter(k=>(FIGS[k].cards||[]).indexOf(id)>=0);
+  return keys.length ? '<div class="lfig">'+FIG.gallery(keys)+'</div>' : '';
+}
 function renderLearn(v){
   const units = [...new Set(LEARN.map(s=>s.u))];
   if(!units.length){ v.appendChild(el('<div class="empty">개념 자료가 아직 없습니다.</div>')); return; }
@@ -314,6 +326,7 @@ function renderLearn(v){
     const c = el('<div class="card">'
       + '<span class="pill">'+uname(s.u)+'</span>'
       + '<h3>'+s.t+'</h3>'
+      + learnFigs(s)
       + '<div class="body">'+s.body+'</div>'
       + '<div class="srcline">📗 '+s.src+'</div>'
       + '<div class="row" style="margin-top:10px"></div></div>');
@@ -1173,6 +1186,13 @@ async function unlockBank(pw, quiet){
     const payload = JSON.parse(txt);
     LEARN = payload.learn || [];
     QUESTIONS = payload.questions || [];
+
+    /* 🖼️ 그림 모음 — figs.js 도 파일로 두지 않고 여기서 한 번 실행합니다(공개문제 도면이 들어 있어 잠금).
+       lesson.js 보다 먼저 — 슬라이드가 같은 그림을 씁니다. */
+    if(payload.figs && !window.FIGS){
+      try{ (0, eval)(payload.figs); }
+      catch(e){ console.error('그림을 불러오지 못했습니다', e); }
+    }
 
     /* 📽️ 수업 슬라이드 원고 — lesson.js 를 파일로 두지 않고 여기서 실행합니다.
        (전역 const 를 선언하는 파일이라 두 번 실행하면 「이미 선언됨」으로 터집니다.

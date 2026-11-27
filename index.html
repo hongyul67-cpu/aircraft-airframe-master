@@ -570,7 +570,7 @@ function renderGameMenu(v){
 function gameHead(v, gm, extraHtml){
   const c = el('<div class="card"><div class="row" style="justify-content:space-between">'
     + '<b>'+gm.emoji+' '+gm.name+'</b>'
-    + '<button class="btn btn-ghost" id="gBack">← 게임 목록</button></div>'
+    + '<button class="btn btn-ghost" id="gBack">← 뒤로</button></div>'
     + (extraHtml||'') + '</div>');
   v.appendChild(c);
   $('#gBack').onclick = ()=>{ if(tick){clearInterval(tick);tick=null;} render('game'); };
